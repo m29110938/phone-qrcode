@@ -1,0 +1,71 @@
+from unicodedata import name
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from time import sleep
+import requests
+
+
+def input_qrcode():
+    ## input
+    name_ch = input("中文姓名: ")
+    while(name_ch == ""):    
+        name_ch = input("不能為空，請重新輸入: ")
+    name_eng = input("英文姓名 (Ken_Lin): ")
+    name_eng = name_eng.replace(" ","")
+    name_eng = name_eng.replace("_"," ")
+    while(name_eng == ""):    
+        name_eng = input("不能為空，請重新輸入: ")
+    title = input("職稱: ")
+    while(title == ""):    
+        title = input("不能為空，請重新輸入: ")
+    department = input("部門: ")
+    while(department == ""):    
+        department = input("不能為空，請重新輸入: ")
+    phone = input("手機 (0912345678) (可不輸入): ")
+    if(phone != ""):
+        phone1 = phone[0].replace("0","+886")
+        phone2 = phone[1:4]
+        phone3 = phone[4:7]
+        phone4 = phone[7:10]
+        phoneNew = phone1 + "-" + phone2 + "-"  + phone3 + "-"  + phone4
+    else:
+        phoneNew = ""
+    ext = input("分機: ")
+    while(ext == ""):    
+        ext = input("不能為空，請重新輸入: ")
+    fax = input("傳真 ("分機號碼") (最前面的02不用輸入): ")
+    while(fax == ""):    
+        fax = input("不能為空，請重新輸入: ")
+    fax1 = fax[0:4]
+    fax2 = fax[4:9]
+    faxNew = fax1 + "-" + fax2
+    email = name_eng.replace(" ","_",1).lower()+"信箱"
+    qrcode_value = "BEGIN:VCARD\nVERSION:3.0\nN:{};{}\nTITLE:{}\nORG:"公司名稱";{}\nTEL;TYPE=CELL:{}\nTEL;TYPE=WORK:+886-"公司號碼",{}\nTEL;TYPE=WORK,FAX:{}\nEMAIL;TYPE=WORK:{}\nURL;TYPE=WORK:"公司網址"\nADR;TYPE=WORK:;;"公司地址";\nEND:VCARD".format(name_ch,name_eng,title,department,phoneNew,ext,faxNew,email)
+
+    # driver = webdriver.Chrome(r"C:\\Users\\TW001566\\Downloads\\chromedriver.exe") # 打開瀏覽器執行
+    # driver = webdriver.Chrome() # 打開瀏覽器執行
+
+    options = webdriver.ChromeOptions() # 不打開瀏覽器執行
+    options.add_argument('headless')
+    driver = webdriver.Chrome(chrome_options=options)
+
+    driver.get("http://www.calm9.com/labs/urlencode")
+    driver.implicitly_wait(20)
+    driver.find_element_by_id('Decode').click
+    driver.find_element(By.NAME,'Decode').send_keys(qrcode_value)
+    btn = driver.find_element(By.ID,"Method")
+    btn.click()
+    sleep(2)    
+
+    encode_output = driver.find_element_by_id('Encode').text
+    # print(encode_output)
+    
+    img_url = "https://chart.googleapis.com/chart?cht=qr&chs=300&choe=UTF-8&chld=L|2&chl=" + encode_output
+
+    # sleep(2)
+    res=requests.get(img_url)
+    with open(name_eng.replace(" ","_").lower()+".jpg" ,'wb') as f:
+        f.write(res.content)
+        
+input_qrcode()
+print("--------------------Finish--------------------")
